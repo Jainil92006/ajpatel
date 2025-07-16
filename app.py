@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, send_from_directory, jsonify, send_file
+from flask import Flask, request, redirect, session, send_from_directory, jsonify, send_file, Response
 import os
 import sqlite3
 from werkzeug.utils import secure_filename
@@ -12,7 +12,16 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 DB_FILE = "expenses.db"
 
-# Initialize databases
+# Load HTML from same directory as app.py
+def load_html(filename):
+    try:
+        full_path = os.path.join(os.path.dirname(__file__), filename)
+        with open(full_path, 'r', encoding='utf-8') as f:
+            return Response(f.read(), mimetype='text/html')
+    except FileNotFoundError:
+        return "HTML file not found", 404
+
+# Initialize DBs
 def init_db():
     with sqlite3.connect("database.db") as conn:
         conn.execute("""
@@ -42,27 +51,27 @@ def init_db():
 
 init_db()
 
-@app.route('/', methods=['GET', 'POST', 'HEAD'])
+@app.route('/', methods=['GET', 'POST'])
 def login():
     if 'user' in session:
         return redirect('/dashboard')
 
     if request.method == 'POST':
-        u = request.form['username']
-        p = request.form['password']
+        username = request.form['username']
+        password = request.form['password']
         with sqlite3.connect("database.db") as conn:
-            user = conn.execute("SELECT * FROM users WHERE username=? AND password=?", (u, p)).fetchone()
+            user = conn.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password)).fetchone()
             if user:
-                session['user'] = u
-                session.pop('pwd_ok', None)
+                session['user'] = username
                 return redirect('/dashboard')
-    return render_template('index.html')
+
+    return load_html('index.html')
 
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect('/')
-    return render_template('dashboard.html', username=session['user'])
+    return load_html('dashboard.html')
 
 @app.route('/logout')
 def logout():
@@ -152,7 +161,8 @@ def forget_password():
                 msg = 'Password updated.'
             else:
                 msg = 'Username not found.'
-    return render_template('forget_password.html', message=msg)
+        return msg
+    return load_html('forget_password.html')
 
 @app.route('/add_expense', methods=['POST'])
 def add_expense():
@@ -169,7 +179,6 @@ def add_expense():
 def get_expenses():
     with sqlite3.connect(DB_FILE) as conn:
         rows = conn.execute("SELECT id, name, amount, description, date FROM expenses ORDER BY name, date DESC").fetchall()
-
     grouped = {}
     for row in rows:
         id_, name, amount, description, date = row
@@ -201,12 +210,12 @@ def export_excel(name):
             WHERE name = ? 
             ORDER BY date DESC
         """, conn, params=(name,))
-
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name=name)
     output.seek(0)
     return send_file(output, download_name=f"{name}_Expenses.xlsx", as_attachment=True)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
+
