@@ -42,10 +42,10 @@ def init_db():
 
 init_db()
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST', 'HEAD'])
 def login():
     if 'user' in session:
-        return redirect('dashboard')
+        return redirect('/dashboard')
 
     if request.method == 'POST':
         u = request.form['username']
@@ -55,7 +55,7 @@ def login():
             if user:
                 session['user'] = u
                 session.pop('pwd_ok', None)
-                return redirect('dashboard')
+                return redirect('/dashboard')
     return render_template('login.html')
 
 @app.route('/dashboard')
