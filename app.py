@@ -55,21 +55,21 @@ def login():
             if user:
                 session['user'] = u
                 session.pop('pwd_ok', None)
-                return redirect('/dashboard')
-    return render_template('login.html')
+                return redirect('dashboard')
+    return render_template('index.html')
 
-@app.route('/dashboard')
+@app.route('dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect('/')
     return render_template('dashboard.html', username=session['user'])
 
-@app.route('/logout')
+@app.route('logout')
 def logout():
     session.clear()
     return redirect('/')
 
-@app.route('/confirm_password', methods=['POST'])
+@app.route('confirm_password', methods=['POST'])
 def confirm_password():
     if 'user' not in session:
         return jsonify(ok=False), 401
@@ -139,7 +139,7 @@ def uploads(filename):
         return redirect('/')
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-@app.route('/forget_password', methods=['GET', 'POST'])
+@app.route('forget_password', methods=['GET', 'POST'])
 def forget_password():
     msg = ''
     if request.method == 'POST':
