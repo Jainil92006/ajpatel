@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, session, send_from_directory, jsonify, send_file, Response
+from flask import Flask, request, redirect, session, send_from_directory, jsonify, send_file, Response,render_template
 import os
 import sqlite3
 from werkzeug.utils import secure_filename
