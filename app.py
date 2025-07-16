@@ -217,6 +217,11 @@ def export_excel(name):
     output.seek(0)
     return send_file(output, download_name=f"{name}_Expenses.xlsx", as_attachment=True)
 
+@app.route('/img/<path:filename>')
+def serve_image(filename):
+    return send_from_directory('.', filename)  # or use 'uploads' if that's where images are
+
+
 if __name__ == '__main__':
     app.run(debug=True)
 
