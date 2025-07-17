@@ -12,30 +12,31 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 DB_FILE = "expenses.db"
 
-# Load HTML from same directory as app.py
 def load_html(filename, context=None):
     try:
         full_path = os.path.join(os.path.dirname(__file__), filename)
         with open(full_path, 'r', encoding='utf-8') as f:
             html = f.read()
             if context:
-                # Handle {{ key }}
+                # Replace {{ key }}
                 for key, value in context.items():
                     html = html.replace(f"{{{{ {key} }}}}", str(value))
 
-                # Handle {% if key %} ... {% endif %}
-                for key in context:
-                    if_tag = f"{% if {key} %}"
+                # Handle {% if key %}...{% endif %}
+                for key, value in context.items():
+                    if_tag = f"{{% if {key} %}}"
                     endif_tag = "{% endif %}"
                     if if_tag in html:
                         before, rest = html.split(if_tag)
                         condition_block, after = rest.split(endif_tag)
-                        html = before + condition_block + after
-                    else:
-                        html = html.replace(if_tag, "").replace(endif_tag, "")
+                        if value:
+                            html = before + condition_block + after
+                        else:
+                            html = before + after
             return Response(html, mimetype='text/html')
     except FileNotFoundError:
         return "HTML file not found", 404
+
 
 # Initialize DBs
 def init_db():
